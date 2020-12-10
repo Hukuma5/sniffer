@@ -4,6 +4,7 @@
 #define APP_DISCLAIMER	"THERE IS ABSOLUTELY NO WARRANTY FOR THIS PROGRAM."
 
 #include <pcap.h>
+#include <ctime>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -239,6 +240,9 @@ print_payload(const u_char *payload, int len)
 void
 got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    printf("\nDate and time of capture: %d.%d.%d %d:%d", ltm->tm_mday, 1+ltm->tm_mon, 1900 + ltm->tm_year, ltm->tm_hour, ltm->tm_min);
 
     static int count = 1;                   /* packet counter */
 
@@ -356,6 +360,7 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 
 int main(int argc, char **argv)
 {
+    //сохранить время запуска записи и поместить его в название файла
 
     char *dev = NULL;			/* capture device name */
     char errbuf[PCAP_ERRBUF_SIZE];		/* error buffer */
