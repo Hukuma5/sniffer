@@ -1,7 +1,7 @@
-#define APP_NAME		"sniffex"
-#define APP_DESC		"Sniffer example using libpcap"
-#define APP_COPYRIGHT	"Copyright (c) 2005 The Tcpdump Group"
-#define APP_DISCLAIMER	"THERE IS ABSOLUTELY NO WARRANTY FOR THIS PROGRAM."
+#define APP_NAME        "sniffex"
+#define APP_DESC        "Sniffer example using libpcap"
+#define APP_COPYRIGHT    "Copyright (c) 2005 The Tcpdump Group"
+#define APP_DISCLAIMER    "THERE IS ABSOLUTELY NO WARRANTY FOR THIS PROGRAM."
 
 #include <pcap.h>
 #include <ctime>
@@ -27,7 +27,7 @@
 #include <string.h>
 #include <netinet/in.h>
 
-
+FILE *file;
 
 /* default snap length (maximum bytes per packet to capture) */
 #define SNAP_LEN 1518
@@ -36,7 +36,7 @@
 #define SIZE_ETHERNET 14
 
 /* Ethernet addresses are 6 bytes */
-#define ETHER_ADDR_LEN	6
+#define ETHER_ADDR_LEN    6
 
 /* Ethernet header */
 struct sniff_ethernet {
@@ -112,10 +112,10 @@ void
 print_app_banner(void)
 {
 
-    printf("%s - %s\n", APP_NAME, APP_DESC);
-    printf("%s\n", APP_COPYRIGHT);
-    printf("%s\n", APP_DISCLAIMER);
-    printf("\n");
+    fprintf(file,"%s - %s\n", APP_NAME, APP_DESC);
+    fprintf(file,"%s\n", APP_COPYRIGHT);
+    fprintf(file,"%s\n", APP_DISCLAIMER);
+    fprintf(file,"\n");
 
     return;
 }
@@ -127,11 +127,11 @@ void
 print_app_usage(void)
 {
 
-    printf("Usage: %s [interface]\n", APP_NAME);
-    printf("\n");
-    printf("Options:\n");
-    printf("    interface    Listen on <interface> for packets.\n");
-    printf("\n");
+    fprintf(file,"Usage: %s [interface]\n", APP_NAME);
+    fprintf(file,"\n");
+    fprintf(file,"Options:\n");
+    fprintf(file,"    interface    Listen on <interface> for packets.\n");
+    fprintf(file,"\n");
 
     return;
 }
@@ -150,41 +150,41 @@ print_hex_ascii_line(const u_char *payload, int len, int offset)
     const u_char *ch;
 
     /* offset */
-    printf("%05d   ", offset);
+    fprintf(file,"%05d   ", offset);
 
     /* hex */
     ch = payload;
     for(i = 0; i < len; i++) {
-        printf("%02x ", *ch);
+        fprintf(file,"%02x ", *ch);
         ch++;
         /* print extra space after 8th byte for visual aid */
         if (i == 7)
-            printf(" ");
+            fprintf(file," ");
     }
     /* print space to handle line less than 8 bytes */
     if (len < 8)
-        printf(" ");
+        fprintf(file," ");
 
     /* fill hex gap with spaces if not full line */
     if (len < 16) {
         gap = 16 - len;
         for (i = 0; i < gap; i++) {
-            printf("   ");
+            fprintf(file,"   ");
         }
     }
-    printf("   ");
+    fprintf(file,"   ");
 
     /* ascii (if printable) */
     ch = payload;
     for(i = 0; i < len; i++) {
         if (isprint(*ch))
-            printf("%c", *ch);
+            fprintf(file,"%c", *ch);
         else
-            printf(".");
+            fprintf(file,".");
         ch++;
     }
 
-    printf("\n");
+    fprintf(file,"\n");
 
     return;
 }
@@ -197,9 +197,9 @@ print_payload(const u_char *payload, int len)
 {
 
     int len_rem = len;
-    int line_width = 16;			/* number of bytes per line */
+    int line_width = 16;            /* number of bytes per line */
     int line_len;
-    int offset = 0;					/* zero-based offset counter */
+    int offset = 0;                    /* zero-based offset counter */
     const u_char *ch = payload;
 
     if (len <= 0)
@@ -242,7 +242,7 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
     time_t now = time(0);
     tm *ltm = localtime(&now);
-    printf("\nDate and time of capture: %d.%d.%d %d:%d", ltm->tm_mday, 1+ltm->tm_mon, 1900 + ltm->tm_year, ltm->tm_hour, ltm->tm_min);
+    fprintf(file,"\nDate and time of capture: %d.%d.%d %d:%d", ltm->tm_mday, 1+ltm->tm_mon, 1900 + ltm->tm_year, ltm->tm_hour, ltm->tm_min);
 
     static int count = 1;                   /* packet counter */
 
@@ -256,7 +256,7 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
     int size_tcp;
     int size_payload;
 
-    printf("\nPacket number %d:\n", count);
+    fprintf(file,"\nPacket number %d:\n", count);
     count++;
 
     /* define ethernet header */
@@ -266,7 +266,7 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
     ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
     size_ip = IP_HL(ip)*4;
     if (size_ip < 20) {
-        printf("   * Invalid IP header length: %u bytes\n", size_ip);
+        fprintf(file,"   * Invalid IP header length: %u bytes\n", size_ip);
         return;
     }
 
@@ -291,36 +291,36 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
     int chio = getnameinfo((struct sockaddr *) &ip4addr2nd, sizeof(struct sockaddr_in), client, NI_MAXHOST, service2, NI_MAXSERV, NI_NUMERICSERV);
 
     if (s == 0) {
-        printf("From: %s\n", host);
+        fprintf(file,"From: %s\n", host);
         //return 0;
     }
     else {
-        printf("Failed getnameinfo\n");
+        fprintf(file,"Failed getnameinfo\n");
         //return 2;
     }
     if (chio == 0){
-        printf("To: %s\n", client);
+        fprintf(file,"To: %s\n", client);
     }
     else {
-        printf("Failed getnameinfo\n");
+        fprintf(file,"Failed getnameinfo\n");
     }
 
     /* determine protocol */
     switch(ip->ip_p) {
         case IPPROTO_TCP:
-            printf("   Protocol: TCP\n");
+            fprintf(file,"   Protocol: TCP\n");
             break;
         case IPPROTO_UDP:
-            printf("   Protocol: UDP\n");
+            fprintf(file,"   Protocol: UDP\n");
             return;
         case IPPROTO_ICMP:
-            printf("   Protocol: ICMP\n");
+            fprintf(file,"   Protocol: ICMP\n");
             return;
         case IPPROTO_IP:
-            printf("   Protocol: IP\n");
+            fprintf(file,"   Protocol: IP\n");
             return;
         default:
-            printf("   Protocol: unknown\n");
+            fprintf(file,"   Protocol: unknown\n");
             return;
     }
 
@@ -332,12 +332,12 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
     tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
     size_tcp = TH_OFF(tcp)*4;
     if (size_tcp < 20) {
-        printf("   * Invalid TCP header length: %u bytes\n", size_tcp);
+        fprintf(file,"   * Invalid TCP header length: %u bytes\n", size_tcp);
         return;
     }
 
-    printf("   Src port: %d\n", ntohs(tcp->th_sport));
-    printf("   Dst port: %d\n", ntohs(tcp->th_dport));
+    fprintf(file,"   Src port: %d\n", ntohs(tcp->th_sport));
+    fprintf(file,"   Dst port: %d\n", ntohs(tcp->th_dport));
 
     /* define/compute tcp payload (segment) offset */
     //payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
@@ -351,7 +351,7 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
      * treat it as a string.
      */
     if (size_payload > 0) {
-        printf("   Payload (%d bytes):\n", size_payload);
+        fprintf(file,"   Payload (%d bytes):\n", size_payload);
         print_payload((const u_char*)payload, size_payload);
     }
 
@@ -360,80 +360,152 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 
 int main(int argc, char **argv)
 {
-    //сохранить время запуска записи и поместить его в название файла
+    file = fopen("result.txt", "w");
+    //std::vector<char[60000]> resulting_string;
 
-    char *dev = NULL;			/* capture device name */
-    char errbuf[PCAP_ERRBUF_SIZE];		/* error buffer */
-    pcap_t *handle;				/* packet capture handle */
+    /////////////////////////////////////////////////////////
+    if (argc > 1 && *(argv[1]) == '-') {
+    //usage();
+    exit(1);
+    }
+    //create a socket
+    int s0 = socket(AF_INET, SOCK_STREAM, 0);
+    if (s0 < 0){
+    perror ("Cannot create a socket"); exit(1);
+    }
+    // Fill in the address of server
+    struct sockaddr_in peeraddr;
+    memset(&peeraddr, 0, sizeof(peeraddr));
+    const char* peerHost = "localhost";
+    if (argc > 1)
+    peerHost = argv[1];
+    // Resolve the server address (convert from symbolic name to IP number)
+    struct hostent *host = gethostbyname(peerHost);
+    if (host == NULL) {
+    perror("Cannot define host address"); exit(1);
+    }
+    peeraddr.sin_family = AF_INET;
+    short peerPort = 1234;
+    if (argc >= 3)
+    peerPort = (short) atoi(argv[2]);
+    peeraddr.sin_port = htons(peerPort);
+    // Print a resolved address of server (the first IP of the host)
+    fprintf(file,
+    "peer addr = %d.%d.%d.%d, port %d\n",
+    host->h_addr_list[0][0] & 0xff,
+    host->h_addr_list[0][1] & 0xff,
+    host->h_addr_list[0][2] & 0xff,
+    host->h_addr_list[0][3] & 0xff,
+    (int) peerPort
+    );
 
-    char filter_exp[] = "ip";		/* filter expression [3] */
-    struct bpf_program fp;			/* compiled filter program (expression) */
-    bpf_u_int32 mask;			/* subnet mask */
-    bpf_u_int32 net;			/* ip */
-    int num_packets = 10;			/* number of packets to capture */
+    // Write resolved IP address of a server to the address structure
+    memmove(&(peeraddr.sin_addr.s_addr), host->h_addr_list[0], 4);
+
+    // Connect to a remote server
+    int res = connect(s0, (struct sockaddr*) &peeraddr, sizeof(peeraddr));
+    if (res < 0) {
+    perror("Cannot connect"); exit(1);
+    }
+    printf("Connected. Reading a server message.\n");
+
+    char buffer[1024];
+
+    for (;;) {
+    res = read(s0, buffer, 1024);
+    if (res < 0) {
+    perror("Read error");
+    exit(1);
+    }
+    printf("Received:\n%s", buffer);
+
+    //write(s0, "Thanks! Bye-bye...\r\n", 20);
+
+    //close(s0);
+
+    if (buffer == "close") {
+    close(s0);
+    exit(0);
+    }
+    if (buffer == "send") {
+    //write(s0, (char *) (resulting_string.size()) + '|', sizeof(resulting_string.size()));
+    write(s0, file, sizeof(file));// если выйдем за предлы 60000 байт запустить цикл с write ведь каретка останется на конце прошлого write
+    //write(s0, resulting_string, sizeof(resulting_string));
+    } else {
+    if (buffer != "write") fprintf(stderr, "error: wrong command\n\n");
+    else {
+    //////////////////////////////////////////////////////////////////////////
+    char *dev = NULL; /* capture device name */
+    char errbuf[PCAP_ERRBUF_SIZE]; /* error buffer */
+    pcap_t *handle; /* packet capture handle */
+
+    char filter_exp[] = "ip"; /* filter expression [3] */
+    struct bpf_program fp; /* compiled filter program (expression) */
+    bpf_u_int32 mask; /* subnet mask */
+    bpf_u_int32 net; /* ip */
+    int num_packets = 250; /* number of packets to capture */
 
     print_app_banner();
 
     /* check for capture device name on command-line */
     if (argc == 2) {
-        dev = argv[1];
+    dev = argv[1];
+    } else if (argc > 2) {
+    fprintf(stderr, "error: unrecognized command-line options\n\n");
+    print_app_usage();
+    exit(EXIT_FAILURE);
+    } else {
+    /* find a capture device if not specified on command-line */
+    dev = pcap_lookupdev(errbuf);
+    if (dev == NULL) {
+    fprintf(stderr, "Couldn't find default device: %s\n",
+    errbuf);
+    exit(EXIT_FAILURE);
     }
-    else if (argc > 2) {
-        fprintf(stderr, "error: unrecognized command-line options\n\n");
-        print_app_usage();
-        exit(EXIT_FAILURE);
-    }
-    else {
-        /* find a capture device if not specified on command-line */
-        dev = pcap_lookupdev(errbuf);
-        if (dev == NULL) {
-            fprintf(stderr, "Couldn't find default device: %s\n",
-                    errbuf);
-            exit(EXIT_FAILURE);
-        }
     }
 
     /* get network number and mask associated with capture device */
     if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
-        fprintf(stderr, "Couldn't get netmask for device %s: %s\n",
-                dev, errbuf);
-        net = 0;
-        mask = 0;
+    fprintf(stderr, "Couldn't get netmask for device %s: %s\n",
+    dev, errbuf);
+    net = 0;
+    mask = 0;
     }
 
     /* print capture info */
-    printf("Device: %s\n", dev);
-    printf("Number of packets: %d\n", num_packets);
-    printf("Filter expression: %s\n", filter_exp);
+    fprintf(file,"Device: %s\n", dev);
+    //fprintf(file,"Number of packets: %d\n", num_packets);
+    fprintf(file,"Filter expression: %s\n", filter_exp);
 
     /* open capture device */
     handle = pcap_open_live(dev, SNAP_LEN, 1, 1000, errbuf);
     if (handle == NULL) {
-        fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
-        exit(EXIT_FAILURE);
+    fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
+    exit(EXIT_FAILURE);
     }
 
     /* make sure we're capturing on an Ethernet device [2] */
     if (pcap_datalink(handle) != DLT_EN10MB) {
-        fprintf(stderr, "%s is not an Ethernet\n", dev);
-        exit(EXIT_FAILURE);
+    fprintf(stderr, "%s is not an Ethernet\n", dev);
+    exit(EXIT_FAILURE);
     }
 
     /* compile the filter expression */
     if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
-        fprintf(stderr, "Couldn't parse filter %s: %s\n",
-                filter_exp, pcap_geterr(handle));
-        exit(EXIT_FAILURE);
+    fprintf(stderr, "Couldn't parse filter %s: %s\n",
+    filter_exp, pcap_geterr(handle));
+    exit(EXIT_FAILURE);
     }
 
     /* apply the compiled filter */
     if (pcap_setfilter(handle, &fp) == -1) {
-        fprintf(stderr, "Couldn't install filter %s: %s\n",
-                filter_exp, pcap_geterr(handle));
-        exit(EXIT_FAILURE);
+    fprintf(stderr, "Couldn't install filter %s: %s\n",
+    filter_exp, pcap_geterr(handle));
+    exit(EXIT_FAILURE);
     }
 
     /* now we can set our callback function */
+
     pcap_loop(handle, num_packets, got_packet, NULL);
 
     /* cleanup */
@@ -441,7 +513,9 @@ int main(int argc, char **argv)
     pcap_close(handle);
 
     printf("\nCapture complete.\n");
-
-    return 0;
-}
-
+    fprintf(file,"\nCapture complete.\n" );
+    //return 0;
+    }
+    }
+    }
+    }
