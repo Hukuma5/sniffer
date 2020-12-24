@@ -1,3 +1,12 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <iostream>
+#include <fstream>
 #define APP_NAME		"sniffex"
 #define APP_DESC		"Sniffer example using libpcap"
 #define APP_COPYRIGHT	"Copyright (c) 2005 The Tcpdump Group"
@@ -5,7 +14,6 @@
 
 #include <pcap.h>
 #include <ctime>
-#include <vector>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -27,7 +35,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <netinet/in.h>
-
+#include <fstream>
 FILE *file;
 
 /* default snap length (maximum bytes per packet to capture) */
@@ -272,8 +280,8 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
     }
 
     /* print source and destination IP addresses */
-    //printf("       From: %s\n", inet_ntoa(ip->ip_src));
-    //printf("         To: %s\n", inet_ntoa(ip->ip_dst));
+    //fprintf(file,"       From: %s\n", inet_ntoa(ip->ip_src));
+    //fprintf(file,"         To: %s\n", inet_ntoa(ip->ip_dst));
     struct sockaddr_in ip4addr;
     memset(&ip4addr, 0, sizeof(struct sockaddr_in));
     ip4addr.sin_family = AF_INET;
@@ -359,52 +367,41 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
     return;
 }
 
-//static void usage();
-
-int main(int argc, char **argv)
-{
-    file = fopen("result.txt", "w");
-    //std::vector<char[60000]> resulting_string;
-
-    /////////////////////////////////////////////////////////
+int main(int argc, char *argv[]) {
     if (argc > 1 && *(argv[1]) == '-') {
-        //usage();
-        exit(1);
-    }/*
-    SOCKET s0; //defines the sockets TO SEND
-    sockaddr_in peeraddr;//information about the socket
-
-    peeraddr.sin_addr.s_addr = inet_addr("127.0.0.0");//ip of the server you want to connect to
-    peeraddr.sin_family = AF_INET;//family of the socket, for internet it's AF_INET
-    peeraddr.sin_port = htons(1234);// 23 for telnet etc, it's the port
-    s0 = socket(AF_INET, SOCK_STREAM, 0);//second parameter is the type of the socket, SOCK_STREAM opens a connection ( use for TCD ), SOCK_DGRAM doesn't connect() or accept() it's used for UDP
-    if (s0 < 0){
-        perror ("Cannot create a socket"); exit(1);
-    }*/
-
-    //create a socket
-    int s0 = socket(AF_INET, SOCK_STREAM, 0);
-    if (s0 < 0){
-        perror ("Cannot create a socket"); exit(1);
+         exit(1);
     }
+
+
+    //std::file >> "SALAM";
+
+    // Create a socket
+    int s0 = socket(AF_INET, SOCK_STREAM, 0);
+    if (s0 < 0) {
+        perror("Cannot create a socket"); exit(1);
+    }
+
     // Fill in the address of server
     struct sockaddr_in peeraddr;
     memset(&peeraddr, 0, sizeof(peeraddr));
     const char* peerHost = "localhost";
     if (argc > 1)
         peerHost = argv[1];
+
     // Resolve the server address (convert from symbolic name to IP number)
-    struct hostent *host = gethostbyname("127.0.0.1");
+    //struct hostent *host = gethostbyname(peerHost);
+    struct hostent *host = gethostbyname("0.0.0.0");
     if (host == NULL) {
         perror("Cannot define host address"); exit(1);
     }
     peeraddr.sin_family = AF_INET;
-    short peerPort = 1234;
+    short peerPort = 80;
     if (argc >= 3)
         peerPort = (short) atoi(argv[2]);
     peeraddr.sin_port = htons(peerPort);
+
     // Print a resolved address of server (the first IP of the host)
-    fprintf(file,
+    printf(
             "peer addr = %d.%d.%d.%d, port %d\n",
             host->h_addr_list[0][0] & 0xff,
             host->h_addr_list[0][1] & 0xff,
@@ -414,123 +411,134 @@ int main(int argc, char **argv)
     );
 
     // Write resolved IP address of a server to the address structure
-    //memmove(&(peeraddr.sin_addr.s_addr), host->h_addr_list[0], 4);
+    memmove(&(peeraddr.sin_addr.s_addr), host->h_addr_list[0], 4);
 
     // Connect to a remote server
     int res = connect(s0, (struct sockaddr*) &peeraddr, sizeof(peeraddr));
     if (res < 0) {
         perror("Cannot connect"); exit(1);
     }
-    printf("Connected. Reading a server message.\n");
-
-
+    printf("Write your login: \n");
+    char User_name[20];
+    std::cin>>User_name;
+    write(s0, User_name, 20);
+    //write(s0, &file, 40);
+    printf("Connected. Reading a server command\n");
+for(;;) {
     char buffer[1024];
+    char command[1024];
+    res = read(s0, buffer, 1024);
+    if (res < 0) {
+        perror("Read error");
+        exit(1);
+    }
+    res = read(s0, command, 1024);
+    std::string BUFFER = buffer;
+    std::string COMMAND = command;
+    //printf("Received:\n%s", buffer);
+    //printf("Received command:\n%s", command);
 
-    for (;;) {
-        res = read(s0, buffer, 1024);
-        if (res < 0) {
-            perror("Read error");
-            exit(1);
-        }
-        printf("Received:\n%s", buffer);
-
-        //write(s0, "Thanks! Bye-bye...\r\n", 20);
-
-        //close(s0);
-
-        if (buffer == "close") {
+    //write(s0, "Thanks! Bye-bye...\r\n", 20);
+    if (BUFFER == User_name) {
+        printf("Received:\n%s\n", buffer);
+        printf("Received command:\n%s", command);
+        if (COMMAND == "close") {
             close(s0);
-            exit(0);
+            return 0;
         }
-        if (buffer == "send") {
-            //write(s0, (char *) (resulting_string.size()) + '|', sizeof(resulting_string.size()));
-            write(s0, file, sizeof(file));// если выйдем за предлы 60000 байт запустить цикл с write ведь каретка останется на конце прошлого write
-            //write(s0, resulting_string, sizeof(resulting_string));
-        } else {
-            if (buffer != "write") fprintf(stderr, "error: wrong command\n\n");
-            else {
-                //////////////////////////////////////////////////////////////////////////
-                char *dev = NULL;            /* capture device name */
-                char errbuf[PCAP_ERRBUF_SIZE];        /* error buffer */
-                pcap_t *handle;                /* packet capture handle */
+        if (COMMAND == "start") {
+            file = fopen("result.txt", "w");
+            char *dev = NULL;			/* capture device name */
+            char errbuf[PCAP_ERRBUF_SIZE];		/* error buffer */
+            pcap_t *handle;				/* packet capture handle */
 
-                char filter_exp[] = "ip";        /* filter expression [3] */
-                struct bpf_program fp;            /* compiled filter program (expression) */
-                bpf_u_int32 mask;            /* subnet mask */
-                bpf_u_int32 net;            /* ip */
-                int num_packets = 250;            /* number of packets to capture */
+            char filter_exp[] = "ip";		/* filter expression [3] */
+            struct bpf_program fp;			/* compiled filter program (expression) */
+            bpf_u_int32 mask;			/* subnet mask */
+            bpf_u_int32 net;			/* ip */
+            int num_packets = 50;			/* number of packets to capture */
 
-                print_app_banner();
+            print_app_banner();
 
-                /* check for capture device name on command-line */
-                if (argc == 2) {
-                    dev = argv[1];
-                } else if (argc > 2) {
-                    fprintf(stderr, "error: unrecognized command-line options\n\n");
-                    print_app_usage();
-                    exit(EXIT_FAILURE);
-                } else {
-                    /* find a capture device if not specified on command-line */
-                    dev = pcap_lookupdev(errbuf);
-                    if (dev == NULL) {
-                        fprintf(stderr, "Couldn't find default device: %s\n",
-                                errbuf);
-                        exit(EXIT_FAILURE);
-                    }
-                }
-
-                /* get network number and mask associated with capture device */
-                if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
-                    fprintf(stderr, "Couldn't get netmask for device %s: %s\n",
-                            dev, errbuf);
-                    net = 0;
-                    mask = 0;
-                }
-
-                /* print capture info */
-                fprintf(file,"Device: %s\n", dev);
-                //fprintf(file,"Number of packets: %d\n", num_packets);
-                fprintf(file,"Filter expression: %s\n", filter_exp);
-
-                /* open capture device */
-                handle = pcap_open_live(dev, SNAP_LEN, 1, 1000, errbuf);
-                if (handle == NULL) {
-                    fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
-                    exit(EXIT_FAILURE);
-                }
-
-                /* make sure we're capturing on an Ethernet device [2] */
-                if (pcap_datalink(handle) != DLT_EN10MB) {
-                    fprintf(stderr, "%s is not an Ethernet\n", dev);
-                    exit(EXIT_FAILURE);
-                }
-
-                /* compile the filter expression */
-                if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
-                    fprintf(stderr, "Couldn't parse filter %s: %s\n",
-                            filter_exp, pcap_geterr(handle));
-                    exit(EXIT_FAILURE);
-                }
-
-                /* apply the compiled filter */
-                if (pcap_setfilter(handle, &fp) == -1) {
-                    fprintf(stderr, "Couldn't install filter %s: %s\n",
-                            filter_exp, pcap_geterr(handle));
-                    exit(EXIT_FAILURE);
-                }
-
-                /* now we can set our callback function */
-
-                pcap_loop(handle, num_packets, got_packet, NULL);
-
-                /* cleanup */
-                pcap_freecode(&fp);
-                pcap_close(handle);
-
-                printf("\nCapture complete.\n");
-                fprintf(file,"\nCapture complete.\n" );
-                //return 0;
+            /* check for capture device name on command-line */
+            if (argc == 2) {
+                dev = argv[1];
             }
+            else if (argc > 2) {
+                fprintf(stderr, "error: unrecognized command-line options\n\n");
+                print_app_usage();
+                exit(EXIT_FAILURE);
+            }
+            else {
+                /* find a capture device if not specified on command-line */
+                dev = pcap_lookupdev(errbuf);
+                if (dev == NULL) {
+                    fprintf(stderr, "Couldn't find default device: %s\n",
+                            errbuf);
+                    exit(EXIT_FAILURE);
+                }
+            }
+
+            /* get network number and mask associated with capture device */
+            if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
+                fprintf(stderr, "Couldn't get netmask for device %s: %s\n",
+                        dev, errbuf);
+                net = 0;
+                mask = 0;
+            }
+
+            /* print capture info */
+            fprintf(file,"Device: %s\n", dev);
+            fprintf(file,"Number of packets: %d\n", num_packets);
+            fprintf(file,"Filter expression: %s\n", filter_exp);
+
+            /* open capture device */
+            handle = pcap_open_live(dev, SNAP_LEN, 1, 1000, errbuf);
+            if (handle == NULL) {
+                fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
+                exit(EXIT_FAILURE);
+            }
+
+            /* make sure we're capturing on an Ethernet device [2] */
+            if (pcap_datalink(handle) != DLT_EN10MB) {
+                fprintf(stderr, "%s is not an Ethernet\n", dev);
+                exit(EXIT_FAILURE);
+            }
+
+            /* compile the filter expression */
+            if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
+                fprintf(stderr, "Couldn't parse filter %s: %s\n",
+                        filter_exp, pcap_geterr(handle));
+                exit(EXIT_FAILURE);
+            }
+
+            /* apply the compiled filter */
+            if (pcap_setfilter(handle, &fp) == -1) {
+                fprintf(stderr, "Couldn't install filter %s: %s\n",
+                        filter_exp, pcap_geterr(handle));
+                exit(EXIT_FAILURE);
+            }
+
+            /* now we can set our callback function */
+            pcap_loop(handle, num_packets, got_packet, NULL);
+
+            /* cleanup */
+            pcap_freecode(&fp);
+            pcap_close(handle);
+
+            fprintf(file,"\nCapture complete.\n");
+            fclose(file);
+            char arr[1024];
+            file = fopen("result.txt", "r");
+            while (fgets(arr, 1024, file) != NULL)//после каждого старта отправляем по файлу ~600 строк
+                write(s0, arr, 1024);
+            fclose(file);
+
+        } else {
+            std::cout << "wrong command from server";
+            write (s0, "wrong command from server", 25);
         }
     }
 }
+}
+
