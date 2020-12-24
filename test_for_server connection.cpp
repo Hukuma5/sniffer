@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     std::cin>>User_name;
     write(s0, User_name, 20);
     printf("Connected. Reading a server command\n");
-
+for(;;) {
     char buffer[1024];
     char command[1024];
     res = read(s0, buffer, 1024);
@@ -83,15 +83,23 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     res = read(s0, command, 1024);
-    printf("Received:\n%s", buffer);
-    printf("Received command:\n%s", command);
+    std::string BUFFER = buffer;
+    std::string COMMAND = command;
+    //printf("Received:\n%s", buffer);
+    //printf("Received command:\n%s", command);
 
     //write(s0, "Thanks! Bye-bye...\r\n", 20);
-    if (buffer == User_name) {
-        if (command == "close") {
+    if (BUFFER == User_name) {
+        printf("Received:\n%s\n", buffer);
+        printf("Received command:\n%s", command);
+        if (COMMAND == "close") {
             close(s0);
             return 0;
         }
+        if (COMMAND == "start") {
+            std::cout << "\nstarting process\n";
+        }
     }
+}
 }
 
