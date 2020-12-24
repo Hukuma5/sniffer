@@ -21,11 +21,9 @@
 #include <netdb.h>
 #include <iostream>
 
-static void usage();
-
 int main(int argc, char *argv[]) {
     if (argc > 1 && *(argv[1]) == '-') {
-        usage(); exit(1);
+         exit(1);
     }
 
     // Create a socket
@@ -78,29 +76,22 @@ int main(int argc, char *argv[]) {
     printf("Connected. Reading a server command\n");
 
     char buffer[1024];
+    char command[1024];
     res = read(s0, buffer, 1024);
     if (res < 0) {
         perror("Read error");
         exit(1);
     }
+    res = read(s0, command, 1024);
     printf("Received:\n%s", buffer);
+    printf("Received command:\n%s", command);
 
-    write(s0, "Thanks! Bye-bye...\r\n", 20);
-
-    close(s0);
-    return 0;
+    //write(s0, "Thanks! Bye-bye...\r\n", 20);
+    if (buffer == User_name) {
+        if (command == "close") {
+            close(s0);
+            return 0;
+        }
+    }
 }
 
-static void usage() {
-    printf(
-            "A simple Internet client application.\n"
-            "Usage:\n"
-            "         client [IP_address_of_server [port_of_server]]\n"
-            "     where IP_address_of_server is either IP number of server\n"
-            "     or a symbolic Internet name, default is \"localhost\";\n"
-            "     port_of_server is a port number, default is 1234.\n"
-            "The client connects to a server which address is given in a\n"
-            "command line, receives a message from a server, sends the message\n"
-            "\"Thanks! Bye-bye...\", and terminates.\n"
-    );
-}
