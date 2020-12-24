@@ -1,17 +1,3 @@
-//
-// A simple Internet client application.
-// It connects to a remote server,
-// receives a "Hello" message from a server,
-// sends the line "Thanks! Bye-bye..." to a server,
-// and terminates.
-//
-// Usage:
-//          client [IP_address_of_server [port_of_server]]
-//      where IP_address_of_server is either IP number of server
-//      or a symbolic Internet name, default is "localhost";
-//      port_of_server is a port number, default is 1234.
-//
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -98,6 +84,9 @@ for(;;) {
         }
         if (COMMAND == "start") {
             std::cout << "\nstarting process\n";
+        } else {
+            std::cout << "wrong command from server";
+            write (s0, "wrong command from server", 25);
         }
     }
 }
