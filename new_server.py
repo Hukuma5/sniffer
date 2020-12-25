@@ -17,11 +17,14 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1920, 700)
         MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
+
         self.widget = QtWidgets.QWidget(self.centralwidget)
         self.widget.setGeometry(QtCore.QRect(9, 9, 781, 541))
         self.widget.setObjectName("widget")
+
         self.verticalLayout = QtWidgets.QVBoxLayout(self.widget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -35,23 +38,30 @@ class Ui_MainWindow(object):
         # self.listWidget = QtWidgets.QListWidget(self.widget)
         # selflistWidget.setObjectName("listWidget")
         # self.verticalLayout.addWidget(self.listWidget)
+
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
+
         self.pushButton = QtWidgets.QPushButton(self.widget)
         self.pushButton.setObjectName("pushButton")
         self.horizontalLayout.addWidget(self.pushButton)
+
         self.pushButton_2 = QtWidgets.QPushButton(self.widget)
         self.pushButton_2.setObjectName("pushButton_2")
         self.horizontalLayout.addWidget(self.pushButton_2)
+
         self.pushButton_3 = QtWidgets.QPushButton(self.widget)
         self.pushButton_3.setObjectName("pushButton_3")
         self.horizontalLayout.addWidget(self.pushButton_3)
+
         self.verticalLayout.addLayout(self.horizontalLayout)
         MainWindow.setCentralWidget(self.centralwidget)
+
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
+
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
@@ -66,12 +76,12 @@ class Ui_MainWindow(object):
         # self.btn = QPushButton('Dialog', self)
         # self.btn.move(20, 20)
 
-        #        self.le = QLineEdit(self)
-        #       self.le.move(130, 22)
+        # self.le = QLineEdit(self)
+        # self.le.move(130, 22)
 
-        #      self.setGeometry(300, 300, 290, 150)
-        #     self.setWindowTitle('Input dialog')
-        #    self.show()
+        # self.setGeometry(300, 300, 290, 150)
+        # self.setWindowTitle('Input dialog')
+        # self.show()
 
         MainWindow.resize(800, 700)
 
@@ -81,7 +91,6 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-
         self.pushButton.setText(_translate("MainWindow", "start"))
         self.pushButton_2.setText(_translate("MainWindow", "file"))
         self.pushButton_3.setText(_translate("MainWindow", "close"))
@@ -134,18 +143,14 @@ class ExampleApp(QtWidgets.QMainWindow, Ui_MainWindow, QDialog):
         self.chatTextField.setText("")
 
     def close(self):
+        global text2
+        text2 = self.chatTextField.text()
+       # font = self.TextW.font()
+        #font.setPointSize(13)
+        #self.TextW.setFont(font)
         global conn
+        conn.send(text2.encode())
         conn.send("close".encode())
-
-    # def read_from_file(self, file):
-    #   try:
-    #      list_widget = self.listWidget
-    #     with open(file, 'r') as fin:
-    #        entries = [e.strip() for e in fin.readlines()]
-    #   list_widget.insertItems(0, entries)
-    # except OSError as err:
-    #   with open(file, 'w'):
-    #      pass
 
 
 class ServerThread(Thread):
@@ -161,10 +166,11 @@ class ServerThread(Thread):
         tcpServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         tcpServer.bind((TCP_IP, TCP_PORT))
         threads = []
-
         tcpServer.listen(4)
+
         while True:
             print("Multithreaded Python server : Waiting for connections from TCP clients...")
+
             global conn
             (conn, (ip, port)) = tcpServer.accept()
             newthread = ClientThread(ip, port, ExampleApp)
@@ -188,41 +194,28 @@ class ClientThread(Thread):
         while True:
 
             global conn
+            global data
             data = conn.recv(1024)
             # f=open(time.strftime("%Y%m%d-%H")+".txt","w")
-            print(data)
+            # print(data.decode())
 
             if len(data) < 3:
                 break
                 file.close()
-
             else:
                 if len(data) == 5:
                     f = open(data.decode() + time.strftime("%Y%m%d-%H") + ".txt", "a")
-                    # ExampleApp.TextW.append(data.decode())
-                    # print(data)
+                    # print(data, file=f)
                 else:
+                    # f.write(data.decode() +"\n")
                     print(data, file=f)
-                    #f.write(data.decode() + "\n")
+                    # sys.stdout=f
                     # with open (text+time.strftime("%Y%m%d-%H")+".txt","a") as file:
                     # file.write(data.decode()+"\n")
 
-                # g.write(data.decode()+"\n")
-
-                # f=open(time.strftime("%Y%m%d-%H%M%S")+".txt","a")
-                # f.write(data.decode()+"\n")
-                # print(data.decode(),file=g)
-            #  sys.stdout=g
-
-
-# def zap(d):
-#   f=open(time.strftime("%Y%m%d-%H%M%S")+".txt","w")
-#  while len(d)!=1:
-#     f.write(d)
 
 def main():
     app = QApplication(sys.argv)
-
     window = ExampleApp()
     serverThread = ServerThread(ExampleApp)
     window.show()
