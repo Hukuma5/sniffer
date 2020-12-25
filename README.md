@@ -8,6 +8,6 @@
   
 
 ## пример записанного трафика (присланного от клиента) на компьютере с сервером 
-![файл result_from_client](https://github.com/Hukuma5/sniffer___/blob/main/working_client.png?raw=true)
+![файл result_from_client](https://github.com/Hukuma5/sniffer___/blob/main/server_working.jpg?raw=true)
 
 ## ссылка на git с серверной частью для системы контроля сетевого трафика 
